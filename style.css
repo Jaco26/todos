@@ -1,0 +1,82 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: 'Courier New', Courier, monospace;
+}
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+section {
+  margin-bottom: 40px;
+  padding: 1rem 0;
+  margin: 1rem 0;
+}
+
+.btn {
+  cursor: pointer;
+  font: inherit;
+  padding: .5rem 1rem;
+  border: 1px solid #555;
+  border-radius: 2px;
+  background: radial-gradient(white, beige);
+}
+.btn.btn--small {
+  padding: .25rem;
+}
+.btn.btn-primary {
+  background: dodgerblue;
+  color: whitesmoke;
+}
+.btn.btn-danger {
+  background: indianred;
+  color: whitesmoke;
+}
+
+
+.app-wrapper {
+  margin: 32px auto;
+  max-width: 600px;
+}
+
+.new-item__title {
+  resize: none;
+  width: 100%;
+  min-height: 64px;
+  padding: .5rem;
+  margin-bottom: .25rem;
+  border: 1px solid black;
+  transition: border ease-in-out .05s;
+}
+
+.new-item__title:focus {
+  border: 2px solid;
+  border-top-color: coral;
+  border-bottom-color: deepskyblue;
+  border-right-color: darkorchid;
+  border-left-color: deeppink;
+  border-radius: 4px;
+}
+
+.todo-list__complete .todo-list__item {
+  border-left: 8px solid #5a8;
+}
+
+.todo-list__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .5rem 1rem;
+  margin-bottom: 2px;
+  border: 1px solid #888;
+  border-radius: 2px;
+  background-color: whitesmoke;
+}
+
+
+.delete-btn {
+  cursor: pointer;
+}
