@@ -10,7 +10,13 @@ ul {
   padding: 0;
 }
 
-section {
+.app-wrapper {
+  margin: 32px auto;
+  padding: 8px;
+  max-width: 600px;
+}
+
+.section {
   margin-bottom: 40px;
   padding: 1rem 0;
   margin: 1rem 0;
@@ -36,14 +42,23 @@ section {
   color: whitesmoke;
 }
 
-
-.app-wrapper {
-  margin: 32px auto;
-  max-width: 600px;
+.new-item__wrapper {
+  position: relative;
 }
-
-.new-item__title {
+.new-item__hint {
+  position: absolute;
+  display: none;
+  bottom: -16px;
+  left: 4px;
+  font-size: .75rem;
+}
+.new-item__hint.active  {
+  display: inline !important;
+}
+.new-item__text {
   resize: none;
+  outline: none;
+  font: inherit;
   width: 100%;
   min-height: 64px;
   padding: .5rem;
@@ -51,21 +66,18 @@ section {
   border: 1px solid black;
   transition: border ease-in-out .05s;
 }
-
-.new-item__title:focus {
+.new-item__text:focus {
   border: 2px solid;
   border-top-color: coral;
   border-bottom-color: deepskyblue;
   border-right-color: darkorchid;
   border-left-color: deeppink;
   border-radius: 4px;
+
 }
 
-.todo-list__complete .todo-list__item {
-  border-left: 8px solid #5a8;
-}
 
-.todo-list__item {
+.list-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -76,7 +88,11 @@ section {
   background-color: whitesmoke;
 }
 
+.list-item.list-item--complete {
+  border-left: 8px solid #5a8;
+}
 
-.delete-btn {
-  cursor: pointer;
+.list-item__text {
+  margin: 0;
+  font: inherit;
 }

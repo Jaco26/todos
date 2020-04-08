@@ -2,21 +2,59 @@
 const PERSISTANCE = 'jacob_TODOS'
 
 
+const TodoListItem = {
+  name: 'TodoListItem',
+  props: {
+    text: String,
+    complete: Boolean,
+  },
+  template: `
+    <li class="list-item" :class="{ 'list-item--complete' : complete }">
+      <div>
+        <pre class="list-item__text">{{text}}</pre>
+      </div>
+      <div class="list-item__actions">
+        <input type="checkbox" :checked="complete" @input="$emit('updateItemStatus', !complete)"></input>
+        <button class="btn btn-danger btn--small" @click="$emit('deleteItem')">x</button>
+      </div>
+    </li>
+  `
+}
+
+
 const app = new Vue({
+  components: {
+    TodoListItem,
+  },
   data: {
+    showHint: false,
     newItem: '',
-    pending: [],
-    complete: [],
+    items: [],
+  },
+  watch: {
+    items: {
+      deep: true,
+      handler(val) {
+        this.syncPersistance()
+      }
+    }
   },
   computed: {
-    idTodoItems: function() {
-      return this.todoItems.map((x, i) => ({ ...x, id: i }))
+    idItems() {
+      return this.items.map((x, i) => ({ ...x, id: x.text.slice(0, 5) + '_' + i }))
+    },
+    idItemsIds() {
+      return this.idItems.map(x => x.id)
     },
     sortedPending: function() {
-      return this.pending.sort((a, b) => b.date - a.date)
+      return this.idItems
+        .filter(x => !x.complete)
+        .sort((a, b) => b.date - a.date)
     },
     sortedComplete: function() {
-      return this.complete.sort((a, b) => b.date - a.date)
+      return this.idItems
+        .filter(x => x.complete)
+        .sort((a, b) => b.date - a.date)
     }
   },
   mounted: function() {
@@ -26,44 +64,35 @@ const app = new Vue({
     loadPersistance: function() {
       const saved = JSON.parse(localStorage.getItem(PERSISTANCE))
       if (saved) {
-        this.pending = saved.pending
-        this.complete = saved.complete
+        this.items = saved.items
       } else {
         localStorage.setItem(PERSISTANCE, JSON.stringify({
-          pending: [],
-          complete: []
+          items: [],
         }))
       }
     },
     syncPersistance: function() {
-      const saved = JSON.parse(localStorage.getItem(PERSISTANCE)) || { complete: [], pending: [] }
-      saved.pending = this.pending
-      saved.complete = this.complete
+      const saved = JSON.parse(localStorage.getItem(PERSISTANCE)) || { items: [] }
+      saved.items = this.items
       localStorage.setItem(PERSISTANCE, JSON.stringify(saved))
     },
-    setComplete: function(index) {
-      const spliced = this.pending.splice(index, 1)
-      this.complete.push(spliced[0])
-      this.syncPersistance()
+    toggleItemStatus(id, complete) {
+      const index = this.idItemsIds.indexOf(id)
+      this.items[index].complete = complete
     },
-    setPending: function(index) {
-      const spliced = this.complete.splice(index, 1)
-      this.pending.push(spliced[0])
-      this.syncPersistance()
+    deleteItem(id) {
+      const index = this.idItemsIds.indexOf(id)
+      this.items.splice(index, 1)
     },
-    deleteCompleted: function(index) {
-      this.complete.splice(index, 1)
-      this.syncPersistance()
-    },
-    deletePending: function(index) {
-      this.pending.splice(index, 1)
-      this.syncPersistance()
-    },
-    onSubmit: function() {
+    onSubmit: function(e) {
+      e.preventDefault()
       const newItem = this.newItem.trim()
       if (newItem) {
-        this.pending.push({ title: newItem, date: new Date().toUTCString() })
-        this.syncPersistance()
+        this.items.push({
+          text: newItem,
+          complete: false,
+          date: new Date().toUTCString()
+        })
       }
       this.newItem = ''
     }
@@ -72,27 +101,35 @@ const app = new Vue({
     <div class="app-wrapper">
       <form @submit.prevent="onSubmit">
         <div style="display:flex; flex-direction:column;">
-          <textarea class="new-item__title" placeholder="Type something" v-model="newItem"></textarea>
-          <button class="btn btn--small" style="align-self:end" type="submit">Submit</button>
+          <div class="new-item__wrapper">
+            <textarea
+              @focus="showHint = true"
+              @blur="showHint = false"
+              class="new-item__text"
+              placeholder="Type something"
+              @keypress.enter.shift="onSubmit"
+              v-model="newItem"
+            ></textarea>
+            <div class="new-item__hint" :class="{ 'active' : showHint }">
+              "shift" + "enter" to submit
+            </div>
+          </div>
+          <button class="btn btn--small" style="align-self:flex-end" type="submit">Submit</button>
         </div>
 
       </form>
 
-      <section class="sect-pending">
+      <section class="section">
         <div v-if="sortedPending.length">
           Pending items
-          <ul class="todo-list__pending">
-            <li v-for="(x, i) in sortedPending" :key="i + x.title" class="todo-list__item">
-              <div style="flex: 1;">
-                {{x.title}}
-              </div>
-              <div style="margin: 0 1rem;"> 
-                <input type="checkbox" @input="setComplete(i)" />
-              </div>
-              <div>
-                <button class="btn btn-danger btn--small" @click="deletePending(i)">x</button>
-              </div>
-            </li>
+          <ul class="todo-list">
+            <TodoListItem
+              v-for="(x, i) in sortedPending"
+              :key="i + x.text"
+              v-bind="x"
+              @updateItemStatus="toggleItemStatus(x.id, $event)"
+              @deleteItem="deleteItem(x.id)"
+            />
           </ul>
         </div>
         <div v-else>
@@ -100,21 +137,17 @@ const app = new Vue({
         </div>
       </section>
 
-      <section class="sect-complete">
+      <section class="section">
         <div v-if="sortedComplete.length">
           Completed items
-          <ul class="todo-list__complete">
-            <li v-for="(x, i) in sortedComplete" :key="i + x.title" class="todo-list__item">
-              <div style="flex: 1">
-                {{x.title}}
-              </div>
-              <div style="margin: 0 1rem; flex: 0"> 
-                <input type="checkbox" checked @input="setPending(i)" />
-              </div>
-              <div>
-                <button class="btn btn-danger btn--small" style="" @click="deleteCompleted(i)">x</button>
-              </div>
-            </li>
+          <ul class="todo-list">
+            <TodoListItem
+              v-for="(x, i) in sortedComplete"
+              :key="i + x.text"
+              v-bind="x"
+              @updateItemStatus="toggleItemStatus(x.id, $event)"
+              @deleteItem="deleteItem(x.id)"
+            />
           </ul>
         </div>
         <div v-else>
