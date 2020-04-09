@@ -23,11 +23,13 @@ const TodoListItem = {
   `
 }
 
+
 const app = new Vue({
   components: {
     TodoListItem,
   },
   data: {
+    darkMode: false,
     showHint: false,
     newItem: '',
     items: [],
@@ -35,9 +37,12 @@ const app = new Vue({
   watch: {
     items: {
       deep: true,
-      handler(val) {
+      handler() {
         this.syncPersistance()
       }
+    },
+    darkMode() {
+      this.syncPersistance()
     }
   },
   computed: {
@@ -66,15 +71,18 @@ const app = new Vue({
       const saved = JSON.parse(localStorage.getItem(PERSISTANCE))
       if (saved) {
         this.items = saved.items
+        this.darkMode = saved.darkMode
       } else {
         localStorage.setItem(PERSISTANCE, JSON.stringify({
-          items: [],
+          items: this.items,
+          darkMode: this.darkMode
         }))
       }
     },
     syncPersistance: function() {
-      const saved = JSON.parse(localStorage.getItem(PERSISTANCE)) || { items: [] }
+      const saved = JSON.parse(localStorage.getItem(PERSISTANCE)) || { items: [], darkMode: false }
       saved.items = this.items
+      saved.darkMode = this.darkMode
       localStorage.setItem(PERSISTANCE, JSON.stringify(saved))
     },
     toggleItemStatus(id, complete) {
@@ -91,6 +99,7 @@ const app = new Vue({
       if (newItem) {
         this.items.push({
           text: newItem,
+          markdown: markdown.process(newItem),
           complete: false,
           date: new Date().toUTCString()
         })
@@ -99,63 +108,69 @@ const app = new Vue({
     }
   },
   template: `
-    <div class="app-wrapper">
-      <form @submit.prevent="onSubmit">
-        <div style="display:flex; flex-direction:column;">
-          <div class="new-item__wrapper">
-            <textarea
-              @focus="showHint = true"
-              @blur="showHint = false"
-              class="new-item__text"
-              placeholder="Type something"
-              @keypress.enter.shift="onSubmit"
-              v-model="newItem"
-            ></textarea>
-            <div class="new-item__hint" :class="{ 'active' : showHint }">
-              "shift" + "enter" to submit
+    <div class="app-wrapper" :class="{ 'dark' : darkMode }">
+      <div class="app-content">
+        <label for="dark-mode-toggle" style="display: inline-block;margin-bottom: 1rem">
+          Dark mode
+          <input type="checkbox" id="dark-mode-toggle" v-model="darkMode" />
+        </label>
+        
+        <form @submit.prevent="onSubmit">
+          <div style="display:flex; flex-direction:column;">
+            <div class="new-item__wrapper">
+              <textarea
+                @focus="showHint = true"
+                @blur="showHint = false"
+                class="new-item__text"
+                placeholder="Type something"
+                @keypress.enter.shift="onSubmit"
+                v-model="newItem"
+              ></textarea>
+              <div class="new-item__hint" :class="{ 'active' : showHint }">
+                "shift" + "return" to submit
+              </div>
             </div>
+            <button class="btn btn--small" style="align-self:flex-end" type="submit">Save</button>
           </div>
-          <button class="btn btn--small" style="align-self:flex-end" type="submit">Submit</button>
-        </div>
+        </form>
 
-      </form>
+        <section class="section">
+          <div v-if="sortedPending.length">
+            Pending items
+            <ul class="todo-list">
+              <TodoListItem
+                v-for="(x, i) in sortedPending"
+                :key="i + x.text"
+                v-bind="x"
+                @updateItemStatus="toggleItemStatus(x.id, $event)"
+                @deleteItem="deleteItem(x.id)"
+              />
+            </ul>
+          </div>
+          <div v-else>
+            No pending items
+          </div>
+        </section>
 
-      <section class="section">
-        <div v-if="sortedPending.length">
-          Pending items
-          <ul class="todo-list">
-            <TodoListItem
-              v-for="(x, i) in sortedPending"
-              :key="i + x.text"
-              v-bind="x"
-              @updateItemStatus="toggleItemStatus(x.id, $event)"
-              @deleteItem="deleteItem(x.id)"
-            />
-          </ul>
-        </div>
-        <div v-else>
-          No pending items
-        </div>
-      </section>
-
-      <section class="section">
-        <div v-if="sortedComplete.length">
-          Completed items
-          <ul class="todo-list">
-            <TodoListItem
-              v-for="(x, i) in sortedComplete"
-              :key="i + x.text"
-              v-bind="x"
-              @updateItemStatus="toggleItemStatus(x.id, $event)"
-              @deleteItem="deleteItem(x.id)"
-            />
-          </ul>
-        </div>
-        <div v-else>
-          No completed items
-        </div>
-      </section>
-      
+        <section class="section">
+          <div v-if="sortedComplete.length">
+            Completed items
+            <ul class="todo-list">
+              <TodoListItem
+                v-for="(x, i) in sortedComplete"
+                :key="i + x.text"
+                v-bind="x"
+                @updateItemStatus="toggleItemStatus(x.id, $event)"
+                @deleteItem="deleteItem(x.id)"
+              />
+            </ul>
+          </div>
+          <div v-else>
+            No completed items
+          </div>
+        </section>
+        
+      </div>
     </div>
   `
 })
