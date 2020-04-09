@@ -73,7 +73,6 @@ ul {
   border-right-color: darkorchid;
   border-left-color: deeppink;
   border-radius: 4px;
-
 }
 
 
@@ -95,4 +94,8 @@ ul {
 .list-item__text {
   margin: 0;
   font: inherit;
+  flex: 1;
+}
+.list-item__checkbox {
+  margin: 0 1rem;
 }

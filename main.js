@@ -10,17 +10,18 @@ const TodoListItem = {
   },
   template: `
     <li class="list-item" :class="{ 'list-item--complete' : complete }">
-      <div>
-        <pre class="list-item__text">{{text}}</pre>
+      <div class="list-item__text">
+        {{text}}
       </div>
-      <div class="list-item__actions">
+      <div class="list-item__checkbox">
         <input type="checkbox" :checked="complete" @input="$emit('updateItemStatus', !complete)"></input>
+      </div>
+      <div class="list-item__delete-btn">
         <button class="btn btn-danger btn--small" @click="$emit('deleteItem')">x</button>
       </div>
     </li>
   `
 }
-
 
 const app = new Vue({
   components: {
