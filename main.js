@@ -6,21 +6,53 @@ const TodoListItem = {
   name: 'TodoListItem',
   props: {
     text: String,
+    markdown: Array,
     complete: Boolean,
   },
-  template: `
-    <li class="list-item" :class="{ 'list-item--complete' : complete }">
-      <div class="list-item__text">
-        {{text}}
-      </div>
-      <div class="list-item__checkbox">
-        <input type="checkbox" :checked="complete" @input="$emit('updateItemStatus', !complete)"></input>
-      </div>
-      <div class="list-item__delete-btn">
-        <button class="btn btn-danger btn--small" @click="$emit('deleteItem')">x</button>
-      </div>
-    </li>
-  `
+  render(h) {
+    const mdContent = this.markdown.map(x => renderRecursive(h, x))
+
+    const masterCheckbox = h('div',
+      { class: 'list-item__checkbox' },
+      [
+        h('input',
+          {
+            attrs: { type: 'checkbox', checked: this.complete },
+            on: {
+              input: () => this.$emit('updateItemStatus', !this.complete),
+            }
+          }
+        )
+      ]
+    )
+
+    const deleteButton = h('div',
+      { class: 'list-item__delete-btn' },
+      [
+        h('button',
+          {
+            class: 'btn btn-danger btn--small',
+            on: { click: () => this.$emit('deleteItem') }
+          },
+          'x'
+        )
+      ]
+    )
+  
+    return h('li',
+      {
+        class: {
+          'list-item': true,
+          'list-item--complete': this.complete
+        },
+      },
+      [
+        h('div', { class: 'list-item__text' }, mdContent),
+        masterCheckbox,
+        deleteButton,
+      ]
+    )
+  }
 }
 
 
@@ -99,7 +131,7 @@ const app = new Vue({
       if (newItem) {
         this.items.push({
           text: newItem,
-          markdown: markdown.process(newItem),
+          markdown: markdown.textToMarkdown(newItem),
           complete: false,
           date: new Date().toUTCString()
         })
