@@ -10,8 +10,11 @@ ul {
   padding: 0;
 }
 
+p {
+  line-height: 1.2;
+}
 p, h1, h2, h3, h4, h5, h6 {
-  margin: .5rem 0;
+  margin: .75rem 0;
 }
 
 .app-wrapper.dark {

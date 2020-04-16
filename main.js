@@ -2,9 +2,28 @@
 const PERSISTANCE = 'jacob_TODOS'
 
 
+const Draggable = {
+  name: 'Draggable',
+  functional: true,
+  render(h, ctx) {
+    return h('div',
+      {
+        ...ctx.data,
+        attrs: {
+          draggable: true,
+        }
+      },
+      ctx.children
+    )
+  }
+}
+
+
 const TodoListItem = {
   name: 'TodoListItem',
   props: {
+    date: String,
+    id: String,
     text: String,
     markdown: Array,
     complete: Boolean,
@@ -41,6 +60,23 @@ const TodoListItem = {
   
     return h('li',
       {
+        attrs: {
+          draggable: true,
+        },
+        on: {
+          dragstart: e => {
+            e.dataTransfer.setData('text', this.id)
+            // console.log(e.dataTransfer)
+          },
+          dragover: e => {
+            e.preventDefault()
+            // console.log(e)
+          },
+          drop: e => {
+            e.preventDefault()
+            // console.log(e.dataTransfer.getData('text'))
+          }
+        },
         class: {
           'list-item': true,
           'list-item--complete': this.complete
@@ -78,21 +114,14 @@ const app = new Vue({
     }
   },
   computed: {
-    idItems() {
-      return this.items.map((x, i) => ({ ...x, id: x.text.slice(0, 5) + '_' + i }))
-    },
     idItemsIds() {
-      return this.idItems.map(x => x.id)
+      return this.items.map(x => x.id)
     },
-    sortedPending: function() {
-      return this.idItems
-        .filter(x => !x.complete)
-        .sort((a, b) => b.date - a.date)
+    pendingItems: function() {
+      return this.items.filter(x => !x.complete)
     },
-    sortedComplete: function() {
-      return this.idItems
-        .filter(x => x.complete)
-        .sort((a, b) => b.date - a.date)
+    completeItems: function() {
+      return this.items.filter(x => x.complete)
     }
   },
   mounted: function() {
@@ -130,6 +159,7 @@ const app = new Vue({
       const newItem = this.newItem.trim()
       if (newItem) {
         this.items.push({
+          id: uuid(),
           text: newItem,
           markdown: markdown.textToMarkdown(newItem),
           complete: false,
@@ -167,12 +197,12 @@ const app = new Vue({
         </form>
 
         <section class="section">
-          <div v-if="sortedPending.length">
+          <div v-if="pendingItems.length">
             Pending items
             <ul class="todo-list">
               <TodoListItem
-                v-for="(x, i) in sortedPending"
-                :key="i + x.text"
+                v-for="x in pendingItems"
+                :key="x.id"
                 v-bind="x"
                 @updateItemStatus="toggleItemStatus(x.id, $event)"
                 @deleteItem="deleteItem(x.id)"
@@ -185,12 +215,12 @@ const app = new Vue({
         </section>
 
         <section class="section">
-          <div v-if="sortedComplete.length">
+          <div v-if="completeItems.length">
             Completed items
             <ul class="todo-list">
               <TodoListItem
-                v-for="(x, i) in sortedComplete"
-                :key="i + x.text"
+                v-for="x in completeItems"
+                :key="x.id"
                 v-bind="x"
                 @updateItemStatus="toggleItemStatus(x.id, $event)"
                 @deleteItem="deleteItem(x.id)"
