@@ -1,0 +1,30 @@
+.app-wrapper.dark {
+  background: #112d;
+  color: white;
+}
+
+.dark .list-item__content {
+  border-color: #aaa;
+  background-color: #123;
+  color: whitesmoke;
+}
+.dark .list-item__content--complete {
+  border-color: cadetblue;
+  border-left-color: #7f7;
+}
+.dark .new-item__text {
+  border-color: darkgray;
+  background-color: #123;
+  color: aliceblue;
+}
+
+.dark .btn {
+  border-color: #aaa;
+  background: #1111;
+  color: wheat;
+}
+
+.dark .btn.btn-danger {
+  background: indianred;
+  color: whitesmoke;
+}

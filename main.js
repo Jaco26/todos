@@ -2,25 +2,22 @@
 const PERSISTANCE = 'jacob_TODOS'
 
 
-const Draggable = {
-  name: 'Draggable',
+const MarkdownContent = {
+  name: 'MarkdownContent',
   functional: true,
+  props: {
+    markdown: Array,
+  },
   render(h, ctx) {
-    return h('div',
-      {
-        ...ctx.data,
-        attrs: {
-          draggable: true,
-        }
-      },
-      ctx.children
-    )
+    return h('div', null, ctx.props.markdown.map(x => renderRecursive(h, x)))
   }
 }
 
-
 const TodoListItem = {
   name: 'TodoListItem',
+  components: {
+    MarkdownContent,
+  },
   props: {
     date: String,
     id: String,
@@ -28,67 +25,82 @@ const TodoListItem = {
     markdown: Array,
     complete: Boolean,
   },
-  render(h) {
-    const mdContent = this.markdown.map(x => renderRecursive(h, x))
+  data: function() {
+    return {
+      draggable: false,
+    }
+  },
+  template: `
+    <li class="list-item" :class="{ 'list-item--complete' : complete }">
+      <div
+        class="list-item__dropzone"
+        @dragover="onDropzoneDragover"
+        @dragleave="onDropzoneDragleave"
+        @drop="onDropzoneDrop($event, 'above')"
+      ></div>
+      <div
+        class="list-item__content"
+        :class="{ 'list-item__content--complete' : complete }"
+        :draggable="draggable"
+        @dragstart="onDragstart"
+      >
+        <div 
+          class="content__handle"
+          @mouseenter="draggable = true"
+          @mouseleave="draggable = false"
+        ></div>
+        <div class="content__text">
+          <MarkdownContent :markdown="markdown" />
+        </div>
 
-    const masterCheckbox = h('div',
-      { class: 'list-item__checkbox' },
-      [
-        h('input',
-          {
-            attrs: { type: 'checkbox', checked: this.complete },
-            on: {
-              input: () => this.$emit('updateItemStatus', !this.complete),
-            }
-          }
-        )
-      ]
-    )
+        <div class="content__controls">
+          <div class="complete-checkbox">
+            <input
+              type="checkbox"
+              :checked="complete"
+              @input="$emit('updateItemStatus', !complete)"
+            />
+          </div>
+          <div>
+            <button class="btn btn-danger btn--small" @click="$emit('deleteItem')">x</button>
+          </div>
+        </div>
 
-    const deleteButton = h('div',
-      { class: 'list-item__delete-btn' },
-      [
-        h('button',
-          {
-            class: 'btn btn-danger btn--small',
-            on: { click: () => this.$emit('deleteItem') }
-          },
-          'x'
-        )
-      ]
-    )
-  
-    return h('li',
-      {
-        attrs: {
-          draggable: true,
-        },
-        on: {
-          dragstart: e => {
-            e.dataTransfer.setData('text', this.id)
-            // console.log(e.dataTransfer)
-          },
-          dragover: e => {
-            e.preventDefault()
-            // console.log(e)
-          },
-          drop: e => {
-            e.preventDefault()
-            // console.log(e.dataTransfer.getData('text'))
-          }
-        },
-        class: {
-          'list-item': true,
-          'list-item--complete': this.complete
-        },
-      },
-      [
-        h('div', { class: 'list-item__text' }, mdContent),
-        masterCheckbox,
-        deleteButton,
-      ]
-    )
-  }
+      </div>
+      <div
+        class="list-item__dropzone"
+        @ondragover="onDropzoneDragover"
+        @dragleave="onDropzoneDragleave"
+        @ondrop="onDropzoneDrop($event, 'below')"
+      ></div>
+    </li>
+  `,
+  methods: {
+    /** @param {DragEvent} e */
+    onDropzoneDragover: function(e) {
+      // console.log('onDropzoneDragover > e', e)
+      // e.target.classList.add('active')
+      // e.target.style.height = '42px'
+      // e.target.style.backgroundColor = 'blue'
+
+    },
+    /** @param {DragEvent} e */
+    onDropzoneDragleave: function(e) {
+      // e.target.style.height = '4px'
+      // e.target.style.backgroundColor = 'transparent'
+    },
+    /** 
+     * @param {DragEvent} e
+     * @param {string} position
+     */
+    onDropzoneDrop: function(e, position) {
+      // console.log('onDropzoneDrop > e', e)
+    },
+    /** @param {DragEvent} e */
+    onDragstart: function(e) {
+      // console.log('onDragstart > e', e)
+    }
+  },
 }
 
 

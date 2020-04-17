@@ -1,0 +1,44 @@
+.todo-list {
+  list-style: none;
+  padding: 0;
+}
+
+.list-item__dropzone {
+  height: 4px;
+}
+.list-item__dropzone.active {
+  background-color: darkgreen;
+}
+
+.list-item__content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #888;
+  border-radius: 2px;
+  background-color: whitesmoke;
+}
+.list-item__content.list-item__content--complete {
+  border-color: cadetblue;
+}
+.list-item__content .content__handle {
+  flex: 0 0 24px;
+  align-self: stretch;
+  background:#959;
+}
+.list-item__content.list-item__content--complete .content__handle {
+  background-color: #5a8;
+}
+
+.list-item__content .content__text {
+  padding: .5rem 1rem;
+  flex: 1;
+}
+.list-item__content .content__controls {
+  padding: .5rem 1rem;
+  display: flex;
+  align-items: center;
+}
+.list-item__content .content__controls .complete-checkbox {
+  margin-right: 1rem;
+}
