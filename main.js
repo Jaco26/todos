@@ -98,7 +98,6 @@ const TodoListItem = {
      * @param {'above'|'below'} position The position of the dropzone relative to its list-item__content block
      */
     onDropzoneDragover: function(e, position) {
-      // e.preventDefault()
       const dragged = JSON.parse(e.dataTransfer.getData('text'))
       if (this.isEligibleForDrop(dragged, position)) {
         e.preventDefault()
@@ -114,16 +113,25 @@ const TodoListItem = {
      * @param {string} position
      */
     onDropzoneDrop: function(e, position) {
-      e.preventDefault()
-      e.target.classList.remove('active')
       const dragged = JSON.parse(e.dataTransfer.getData('text'))
-      console.log({ dragged, id: this.id, position })
+      if (this.isEligibleForDrop(dragged, position)) {
+        e.preventDefault()
+        e.target.classList.remove('active')
+        const draggedFromAbove = this.index > dragged.index
 
+        const toIndex = this.isFirst
+          ? position === 'above'
+            ? this.index
+            : this.index + 1
+          : draggedFromAbove
+            ? this.index
+            : this.index + 1
+
+        this.$emit('updateItemOrder', { dragged, toIndex })
+      }
     },
     /** @param {DragEvent} e */
     onContentDragstart: function(e) {
-      e.dataTransfer.effectAllowed = 'move'
-      e.dataTransfer.dropEffect = 'move'
       e.dataTransfer.setData('text', JSON.stringify({
         id: this.id,
         index: this.index,
@@ -162,14 +170,17 @@ const app = new Vue({
     }
   },
   computed: {
-    idItemsIds() {
+    indexedItemsIds() {
+      return this.items.map((x, i) => ({ ...x, index: i }))
+    },
+    itemIds() {
       return this.items.map(x => x.id)
     },
     pendingItems: function() {
-      return this.items.filter(x => !x.complete)
+      return this.indexedItemsIds.filter(x => !x.complete)
     },
     completeItems: function() {
-      return this.items.filter(x => x.complete)
+      return this.indexedItemsIds.filter(x => x.complete)
     }
   },
   mounted: function() {
@@ -195,7 +206,7 @@ const app = new Vue({
       localStorage.setItem(PERSISTANCE, JSON.stringify(saved))
     },
     toggleItemStatus(id, complete) {
-      const index = this.idItemsIds.indexOf(id)
+      const index = this.itemIds.indexOf(id)
       this.items[index].complete = complete
     },
     deleteItem(id) {
@@ -215,6 +226,11 @@ const app = new Vue({
         })
       }
       this.newItem = ''
+    },
+    onUpdateItemOrder({ dragged, toIndex }) {
+      const toMove = this.items[dragged.index]
+      this.items.splice(dragged.index, 1)
+      this.items.splice(toIndex, null, toMove)
     }
   },
   template: `
@@ -252,9 +268,9 @@ const app = new Vue({
                 v-for="(x, i) in pendingItems"
                 :key="x.id"
                 :isFirst="i === 0"
-                :index="i"
                 v-bind="x"
                 @updateItemStatus="toggleItemStatus(x.id, $event)"
+                @updateItemOrder="onUpdateItemOrder"
                 @deleteItem="deleteItem(x.id)"
               />
             </ul>
@@ -272,9 +288,9 @@ const app = new Vue({
                 v-for="(x, i) in completeItems"
                 :key="x.id"
                 :isFirst="i === 0"
-                :index="i"
                 v-bind="x"
                 @updateItemStatus="toggleItemStatus(x.id, $event)"
+                @updateItemOrder="onUpdateItemOrder"
                 @deleteItem="deleteItem(x.id)"
               />
             </ul>
