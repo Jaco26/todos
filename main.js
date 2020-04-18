@@ -80,23 +80,28 @@ const TodoListItem = {
     </li>
   `,
   methods: {
+    isEligibleForDrop(dragged, position) {
+      if (dragged.complete !== this.complete) {
+        return false
+      }
+      const draggedFromAbove = this.index > dragged.index
+      if (position === 'above') {
+        return !draggedFromAbove && dragged.index - this.index > 0
+      } else if (position === 'below') {
+        return draggedFromAbove
+          ? this.index - dragged.index > 0
+          : dragged.index - this.index > 1
+      }
+    },
     /** 
      * @param {DragEvent} e
-     * @param {string} position
+     * @param {'above'|'below'} position The position of the dropzone relative to its list-item__content block
      */
     onDropzoneDragover: function(e, position) {
-      e.preventDefault()
+      // e.preventDefault()
       const dragged = JSON.parse(e.dataTransfer.getData('text'))
-
-      // const isAdjacentSlot = position === 'above'
-      //   ? dragged.index === 0
-      //   : Math.abs(this.index - dragged.index) <= 1
-      const isAdjacentSlot = this.index > dragged.index
-        ? Math.abs(this.index - dragged.index) < 1
-        : Math.abs(dragged.index - this.index) < 1
-
-
-      if (dragged.id !== this.id && !isAdjacentSlot) {
+      if (this.isEligibleForDrop(dragged, position)) {
+        e.preventDefault()
         e.target.classList.add('active')
       }
     },
@@ -119,8 +124,12 @@ const TodoListItem = {
     onContentDragstart: function(e) {
       e.dataTransfer.effectAllowed = 'move'
       e.dataTransfer.dropEffect = 'move'
-      e.dataTransfer.setData('text', JSON.stringify({ id: this.id, index: this.index }))
-      // console.log('onDragstart > e', e)
+      e.dataTransfer.setData('text', JSON.stringify({
+        id: this.id,
+        index: this.index,
+        complete: this.complete
+      }))
+
 
     },
     /** @param {DragEvent} e */
@@ -260,8 +269,10 @@ const app = new Vue({
             Completed items
             <ul class="todo-list">
               <TodoListItem
-                v-for="x in completeItems"
+                v-for="(x, i) in completeItems"
                 :key="x.id"
+                :isFirst="i === 0"
+                :index="i"
                 v-bind="x"
                 @updateItemStatus="toggleItemStatus(x.id, $event)"
                 @deleteItem="deleteItem(x.id)"

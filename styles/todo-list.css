@@ -5,6 +5,10 @@
 
 .list-item__dropzone {
   height: 8px;
+  margin: 4px 0;
+  border-radius: 2px;
+  display: flex;
+  transition: height .05s ease-in-out;
 }
 .list-item__dropzone.active {
   height: 64px;
