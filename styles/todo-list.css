@@ -4,10 +4,11 @@
 }
 
 .list-item__dropzone {
-  height: 4px;
+  height: 8px;
 }
 .list-item__dropzone.active {
-  background-color: darkgreen;
+  height: 64px;
+  background-color: #777;
 }
 
 .list-item__content {

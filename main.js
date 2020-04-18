@@ -19,6 +19,8 @@ const TodoListItem = {
     MarkdownContent,
   },
   props: {
+    isFirst: Boolean,
+    index: Number,
     date: String,
     id: String,
     text: String,
@@ -33,8 +35,9 @@ const TodoListItem = {
   template: `
     <li class="list-item" :class="{ 'list-item--complete' : complete }">
       <div
+        v-if="isFirst"
         class="list-item__dropzone"
-        @dragover="onDropzoneDragover"
+        @dragover="onDropzoneDragover($event, 'above')"
         @dragleave="onDropzoneDragleave"
         @drop="onDropzoneDrop($event, 'above')"
       ></div>
@@ -42,7 +45,8 @@ const TodoListItem = {
         class="list-item__content"
         :class="{ 'list-item__content--complete' : complete }"
         :draggable="draggable"
-        @dragstart="onDragstart"
+        @dragstart="onContentDragstart"
+        @drag="onContentDrag"
       >
         <div 
           class="content__handle"
@@ -69,36 +73,59 @@ const TodoListItem = {
       </div>
       <div
         class="list-item__dropzone"
-        @ondragover="onDropzoneDragover"
+        @dragover="onDropzoneDragover($event, 'below')"
         @dragleave="onDropzoneDragleave"
-        @ondrop="onDropzoneDrop($event, 'below')"
+        @drop="onDropzoneDrop($event, 'below')"
       ></div>
     </li>
   `,
   methods: {
-    /** @param {DragEvent} e */
-    onDropzoneDragover: function(e) {
-      // console.log('onDropzoneDragover > e', e)
-      // e.target.classList.add('active')
-      // e.target.style.height = '42px'
-      // e.target.style.backgroundColor = 'blue'
+    /** 
+     * @param {DragEvent} e
+     * @param {string} position
+     */
+    onDropzoneDragover: function(e, position) {
+      e.preventDefault()
+      const dragged = JSON.parse(e.dataTransfer.getData('text'))
 
+      // const isAdjacentSlot = position === 'above'
+      //   ? dragged.index === 0
+      //   : Math.abs(this.index - dragged.index) <= 1
+      const isAdjacentSlot = this.index > dragged.index
+        ? Math.abs(this.index - dragged.index) < 1
+        : Math.abs(dragged.index - this.index) < 1
+
+
+      if (dragged.id !== this.id && !isAdjacentSlot) {
+        e.target.classList.add('active')
+      }
     },
     /** @param {DragEvent} e */
     onDropzoneDragleave: function(e) {
-      // e.target.style.height = '4px'
-      // e.target.style.backgroundColor = 'transparent'
+      e.target.classList.remove('active')
     },
     /** 
      * @param {DragEvent} e
      * @param {string} position
      */
     onDropzoneDrop: function(e, position) {
-      // console.log('onDropzoneDrop > e', e)
+      e.preventDefault()
+      e.target.classList.remove('active')
+      const dragged = JSON.parse(e.dataTransfer.getData('text'))
+      console.log({ dragged, id: this.id, position })
+
     },
     /** @param {DragEvent} e */
-    onDragstart: function(e) {
+    onContentDragstart: function(e) {
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.dropEffect = 'move'
+      e.dataTransfer.setData('text', JSON.stringify({ id: this.id, index: this.index }))
       // console.log('onDragstart > e', e)
+
+    },
+    /** @param {DragEvent} e */
+    onContentDrag: function(e) {
+
     }
   },
 }
@@ -213,8 +240,10 @@ const app = new Vue({
             Pending items
             <ul class="todo-list">
               <TodoListItem
-                v-for="x in pendingItems"
+                v-for="(x, i) in pendingItems"
                 :key="x.id"
+                :isFirst="i === 0"
+                :index="i"
                 v-bind="x"
                 @updateItemStatus="toggleItemStatus(x.id, $event)"
                 @deleteItem="deleteItem(x.id)"
