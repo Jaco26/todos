@@ -5,12 +5,13 @@
 
 .list-item__dropzone {
   height: 8px;
-  margin: 4px 0;
   border-radius: 2px;
   display: flex;
   transition: all .1s ease-in-out;
 }
 .list-item__dropzone.group-active {
+  height: 16px;
+  margin: 4px 0;
   background-color:#777;
 }
 .list-item__dropzone.valid-hovered {

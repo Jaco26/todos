@@ -123,8 +123,6 @@ const TodoList = new Vue({
           Dark mode
           <input type="checkbox" id="dark-mode-toggle" v-model="darkMode" />
         </label>
-
-        {{draggingIndex}}
         
         <form @submit.prevent="onSubmit">
           <div style="display:flex; flex-direction:column;">
