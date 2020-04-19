@@ -72,7 +72,7 @@ const TodoList = new Vue({
       this.items[index].complete = complete
     },
     deleteItem(id) {
-      const index = this.idItemsIds.indexOf(id)
+      const index = this.itemIds.indexOf(id)
       this.items.splice(index, 1)
     },
     onSubmit: function(e) {
