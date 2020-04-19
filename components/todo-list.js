@@ -1,165 +1,18 @@
-
 const PERSISTANCE = 'jacob_TODOS'
 
-
-const MarkdownContent = {
-  name: 'MarkdownContent',
-  functional: true,
-  props: {
-    markdown: Array,
-  },
-  render(h, ctx) {
-    return h('div', null, ctx.props.markdown.map(x => renderRecursive(h, x)))
-  }
-}
-
-const TodoListItem = {
-  name: 'TodoListItem',
-  components: {
-    MarkdownContent,
-  },
-  props: {
-    isFirst: Boolean,
-    index: Number,
-    date: String,
-    id: String,
-    text: String,
-    markdown: Array,
-    complete: Boolean,
-
-    groupDragging: Boolean,
-  },
-  data: function() {
-    return {
-      draggable: false,
-    }
-  },
-  template: `
-    <li class="list-item" :class="{ 'list-item--complete' : complete }">
-      <div
-        v-if="isFirst"
-        class="list-item__dropzone"
-        :class="{ 'group-active' : groupDragging }"
-        @dragover="onDropzoneDragover($event, 'above')"
-        @dragleave="onDropzoneDragleave"
-        @drop="onDropzoneDrop($event, 'above')"
-      ></div>
-      <div
-        class="list-item__content"
-        :class="{ 'list-item__content--complete' : complete }"
-        :draggable="draggable"
-        @dragstart="onContentDragstart"
-        @dragend="onContentDragend"
-      >
-        <div 
-          class="content__handle"
-          @mouseenter="draggable = true"
-          @mouseleave="draggable = false"
-        ></div>
-        <div class="content__text">
-          <MarkdownContent :markdown="markdown" />
-        </div>
-
-        <div class="content__controls">
-          <div class="complete-checkbox">
-            <input
-              type="checkbox"
-              :checked="complete"
-              @input="$emit('updateItemStatus', !complete)"
-            />
-          </div>
-          <div>
-            <button class="btn btn-danger btn--small" @click="$emit('deleteItem')">x</button>
-          </div>
-        </div>
-
-      </div>
-      <div
-        class="list-item__dropzone"
-        :class="{ 'group-active' : groupDragging }"
-        @dragover="onDropzoneDragover($event, 'below')"
-        @dragleave="onDropzoneDragleave"
-        @drop="onDropzoneDrop($event, 'below')"
-      ></div>
-    </li>
-  `,
-  methods: {
-    isEligibleForDrop(dragged, position) {
-      if (dragged.complete !== this.complete) {
-        return false
-      }
-      const draggedFromAbove = this.index > dragged.index
-      if (position === 'above') {
-        return !draggedFromAbove && dragged.index - this.index > 0
-      } else if (position === 'below') {
-        return draggedFromAbove
-          ? this.index - dragged.index > 0
-          : dragged.index - this.index > 1
-      }
-    },
-    /** 
-     * @param {DragEvent} e
-     * @param {'above'|'below'} position The position of the dropzone relative to its list-item__content block
-     */
-    onDropzoneDragover: function(e, position) {
-      const dragged = JSON.parse(e.dataTransfer.getData('text'))
-      if (this.isEligibleForDrop(dragged, position)) {
-        e.preventDefault()
-        e.target.classList.add('valid-hovered')
-      }
-    },
-    /** @param {DragEvent} e */
-    onDropzoneDragleave: function(e) {
-      e.target.classList.remove('valid-hovered')
-
-    },
-    /** 
-     * @param {DragEvent} e
-     * @param {string} position
-     */
-    onDropzoneDrop: function(e, position) {
-      const dragged = JSON.parse(e.dataTransfer.getData('text'))
-      if (this.isEligibleForDrop(dragged, position)) {
-        e.preventDefault()
-        e.target.classList.remove('valid-hovered')
-        const draggedFromAbove = this.index > dragged.index
-        const toIndex = this.isFirst
-          ? position === 'above'
-            ? this.index
-            : this.index + 1
-          : draggedFromAbove
-            ? this.index
-            : this.index + 1
-
-        this.$emit('updateItemOrder', { dragged, toIndex })
-      }
-    },
-    /** @param {DragEvent} e */
-    onContentDragstart: function(e) {
-      e.dataTransfer.setData('text', JSON.stringify({
-        id: this.id,
-        index: this.index,
-        complete: this.complete
-      }))
-      this.$emit('setGroupDragging', this.index)
-    },
-    onContentDragend() {
-      this.$emit('setGroupDragging', null)
-    },
-  },
-}
-
-
-const app = new Vue({
+const TodoList = new Vue({
+  name: 'TodoList',
   components: {
     TodoListItem,
   },
-  data: {
-    darkMode: false,
-    showHint: false,
-    newItem: '',
-    items: [],
-    draggingIndex: null,
+  data: function() {
+    return {
+      darkMode: false,
+      showHint: false,
+      newItem: '',
+      items: [],
+      draggingIndex: null,
+    }
   },
   watch: {
     items: {
@@ -241,10 +94,27 @@ const app = new Vue({
       this.items.splice(dragged.index, 1)
       this.items.splice(toIndex, null, toMove)
     },
-    onSetGroupDraggingIndex(index) {
-      console.log('index', index)
+    onSetGroupDraggingIndex: function(index) {
       this.draggingIndex = index
     },
+    isEligibleForDrop: function(listIndex, status) {
+      if (!this.draggedItem || this.draggedItem.complete !== status) {
+        return false
+      }
+      const draggedItemListIndex = status
+        ? this.completeItems.map((x, i) => ({ masterIndex: x.index, listIndex: i }))
+          .find(x => x.masterIndex === this.draggedItem.index).listIndex
+        : this.pendingItems.map((x, i) => ({ masterIndex: x.index, listIndex: i }))
+          .find(x => x.masterIndex === this.draggedItem.index).listIndex
+
+      if (listIndex === 0) {
+        return {
+          topEligible: draggedItemListIndex !== listIndex,
+          bottomEligible: draggedItemListIndex > 1
+        } 
+      }
+      return draggedItemListIndex !== listIndex && draggedItemListIndex !== listIndex + 1
+    }
   },
   template: `
     <div class="app-wrapper" :class="{ 'dark' : darkMode }">
@@ -253,6 +123,8 @@ const app = new Vue({
           Dark mode
           <input type="checkbox" id="dark-mode-toggle" v-model="darkMode" />
         </label>
+
+        {{draggingIndex}}
         
         <form @submit.prevent="onSubmit">
           <div style="display:flex; flex-direction:column;">
@@ -282,6 +154,7 @@ const app = new Vue({
                 :key="x.id"
                 :isFirst="i === 0"
                 v-bind="x"
+                :groupDragging="isEligibleForDrop(i, false)"
                 @setGroupDragging="onSetGroupDraggingIndex"
                 @updateItemStatus="toggleItemStatus(x.id, $event)"
                 @updateItemOrder="onUpdateItemOrder"
@@ -303,6 +176,7 @@ const app = new Vue({
                 :key="x.id"
                 :isFirst="i === 0"
                 v-bind="x"
+                :groupDragging="isEligibleForDrop(i, true)"
                 @setGroupDragging="onSetGroupDraggingIndex"
                 @updateItemStatus="toggleItemStatus(x.id, $event)"
                 @updateItemOrder="onUpdateItemOrder"
@@ -320,4 +194,4 @@ const app = new Vue({
   `
 })
 
-app.$mount('#app')
+TodoList.$mount('#app')

@@ -8,11 +8,14 @@
   margin: 4px 0;
   border-radius: 2px;
   display: flex;
-  transition: height .05s ease-in-out;
+  transition: all .1s ease-in-out;
 }
-.list-item__dropzone.active {
+.list-item__dropzone.group-active {
+  background-color:#777;
+}
+.list-item__dropzone.valid-hovered {
   height: 64px;
-  background-color: #777;
+  background-color:#777;
 }
 
 .list-item__content {
