@@ -13,6 +13,7 @@ const TodoList = new Vue({
       newItem: '',
       items: [],
       draggingIndex: null,
+      markdown: [],
     }
   },
   watch: {
@@ -76,19 +77,27 @@ const TodoList = new Vue({
       const index = this.itemIds.indexOf(id)
       this.items.splice(index, 1)
     },
-    onSubmit: function(e) {
-      e.preventDefault()
-      const newItem = this.newItem.trim()
-      if (newItem) {
-        this.items.push({
-          id: uuid(),
-          text: newItem,
-          markdown: markdown.textToMarkdown(newItem),
-          complete: false,
-          date: new Date().toUTCString()
-        })
-      }
-      this.newItem = ''
+    // onSubmit: function(e) {
+    //   e.preventDefault()
+    //   const newItem = this.newItem.trim()
+    //   if (newItem) {
+    //     this.items.push({
+    //       id: uuid(),
+    //       text: newItem,
+    //       markdown: markdown.textToMarkdown(newItem),
+    //       complete: false,
+    //       date: new Date().toUTCString()
+    //     })
+    //   }
+    //   this.newItem = ''
+    // },
+    onSubmit: function(markdown) {
+      console.log('onSubmit > markdown', JSON.parse(JSON.stringify(markdown)))
+      this.items.push({
+        id: uuid(),
+        markdown,
+        complete: false,
+      })
     },
     onUpdateItemOrder({ dragged, toIndex }) {
       const toMove = this.items[dragged.index]
@@ -125,14 +134,7 @@ const TodoList = new Vue({
           <input type="checkbox" id="dark-mode-toggle" v-model="darkMode" />
         </label>
         
-        <form @submit.prevent="onSubmit">
-          <div style="display:flex; flex-direction:column;">
-            <div class="new-item__wrapper">
-              <MarkdownEditor />
-            </div>
-            <button class="btn btn--small" style="align-self:flex-end" type="submit">Save</button>
-          </div>
-        </form>
+        <MarkdownEditor :markdown="markdown" @submit="onSubmit"  />
 
         <section class="section">
           <div v-if="pendingItems.length">

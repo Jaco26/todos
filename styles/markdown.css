@@ -1,0 +1,11 @@
+.md--bold {
+  font-weight: 700;
+}
+
+.md--italics {
+  font-style: italic;
+}
+
+.md--underlined {
+  text-decoration: underline;
+}

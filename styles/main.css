@@ -78,18 +78,6 @@
   position: relative;
 }
 
-.md-editor .md-editor__hint {
-  position: absolute;
-  display: none;
-  bottom: -16px;
-  left: 4px;
-  font-size: .75rem;
-}
-
-.md-editor__hint.active {
-  display: inline !important;
-}
-
 .md-editor .md-editor__textarea {
   resize: none;
   outline: none;
@@ -109,4 +97,20 @@
   border-bottom-color: deepskyblue;
   border-right-color: darkorchid;
   border-left-color: deeppink;
+}
+
+.md-editor .md-editor__controls {
+  display: flex;
+  justify-content: space-between;
+}
+
+.md-editor .md-editor__controls .controls__hint {
+  position: absolute;
+  display: none;
+  left: 4px;
+  font-size: .75rem;
+}
+
+.md-editor .md-editor__controls .controls__hint.active {
+  display: inline !important;
 }

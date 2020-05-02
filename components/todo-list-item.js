@@ -6,9 +6,7 @@ const TodoListItem = {
   props: {
     isFirst: Boolean,
     index: Number,
-    date: String,
     id: String,
-    text: String,
     markdown: Array,
     complete: Boolean,
 

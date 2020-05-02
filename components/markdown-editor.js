@@ -36,7 +36,7 @@ const MarkdownEditor = (function() {
       data: {
         class: 'md--heading',
       },
-      children: [rawText],
+      children: [rawText.slice(1)],
     },
   })
 
@@ -44,25 +44,24 @@ const MarkdownEditor = (function() {
     rawText,
     type: CHECKBOX,
     args: {
-      tag: 'span',
-      data: {
-        class: 'md--checkbox',
-        attrs: { checked }
-      },
+      tag: 'div',
       children: [
         {
-          tag: 'input',
-          data: {
-            attrs: {
-              type: 'checkbox',
-              checked,
-            }
+          args: {
+            tag: 'input',
+            data: {
+              attrs: {
+                type: 'checkbox',
+                checked,
+              }
+            },
           }
         },
         {
-          tag: 'span',
-          data: null,
-          children: rawText.slice(3)
+          args: {
+            tag: 'span',
+            children: [rawText.slice(5)]
+          }
         },
       ],
     },
@@ -116,9 +115,7 @@ const MarkdownEditor = (function() {
     }
   })
 
-  function markdownObjectToString(markdownObj) {
-    
-  }
+ 
 
   /** @param {string} txt */
   function processLineLevelElements(txt) {
@@ -139,17 +136,12 @@ const MarkdownEditor = (function() {
     }, [])
   }
 
-  function mergeRegexMatches(params) {
-    
-  }
-
   /** @param {string} txt */
   function processInlineElements(txt) {
     const bold = matchBold(txt).map(x => ({ text: x, type: BOLD }))
     const italics = matchItalics(txt).map(x => ({ text: x, type: ITALICS }))
     const underlined = matchUnderlined(txt).map(x => ({ text: x, type: UNDERLINED }))
     const sorted = [...bold, ...italics, ...underlined].sort((a, b) => a.index - b.index)
-
     const accum = []
     if (sorted.length) {
       sorted.forEach(x => {
@@ -177,7 +169,7 @@ const MarkdownEditor = (function() {
   function markdownStringToObject(markdownStr) {
     return processLineLevelElements(markdownStr)
       .map(x => {
-        if ([PARA, CHECKBOX].includes(x.type)) {
+        if (x.type === PARA) {
           x.args.children = processInlineElements(x.rawText)
         }
         return x
@@ -187,7 +179,7 @@ const MarkdownEditor = (function() {
   return {
     name: 'MarkdownEditor',
     props: {
-      initialMarkdown: Array,
+      markdown: Array,
       maxLines: {
         type: Number,
         default: EDITOR_MAX_LINES
@@ -209,6 +201,9 @@ const MarkdownEditor = (function() {
             this.editorHeight -= EDITOR_LINE_HEIGHT
           }
         }
+        if (nv === 1) {
+          this.editorHeight = MIN_EDITOR_HEIGHT
+        }
       },
     },
     computed: {
@@ -225,23 +220,36 @@ const MarkdownEditor = (function() {
     methods: {
       onSubmit: function(e) {
         e.preventDefault()
-        const mdObj = markdownStringToObject(this.markdownText)
-        console.log(mdObj)
+        const mdText = this.markdownText.trim()
+        if (mdText) {
+          this.$emit('submit', markdownStringToObject(mdText))
+          this.markdownText = ''
+        }
       },
     },
     template: `
       <div class="md-editor">
-        <textarea
-          class="md-editor__textarea"
-          :style="textareaStyle"
-          @focus="showHint = true"
-          @blur="showHint = false"
-          @keypress.enter.shift="onSubmit"
-          v-model="markdownText"
-        ></textarea>
-        <div class="md-editor__hint" :class="{ 'active' : showHint }">
-          "shift" + "return" to submit
-        </div>
+        <form @submit.prevent="onSubmit">
+          <textarea
+            class="md-editor__textarea"
+            :style="textareaStyle"
+            @focus="showHint = true"
+            @blur="showHint = false"
+            @keypress.enter.shift="onSubmit"
+            v-model="markdownText"
+          ></textarea>
+          <div class="md-editor__controls">
+            <div>
+              <div class="controls__hint" :class="{ 'active' : showHint }">
+                "shift" + "return" to submit
+              </div>
+            </div>
+            <div class="controls__submit">
+              <button class="btn btn--small" style="align-self:flex-end" type="submit">Save</button>
+            </div>
+          </div>
+
+        </form>
       </div>
     `
   }
