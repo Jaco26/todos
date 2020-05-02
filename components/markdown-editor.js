@@ -4,31 +4,194 @@ const MarkdownEditor = (function() {
   // statics
   const MIN_EDITOR_HEIGHT = 60
   const EDITOR_LINE_HEIGHT = 20
+  const EDITOR_MAX_LINES = 8
 
   // md object types 
   const HEADING = 'HEADING'
   const PARA = 'PARA'
-  const CHECKBOX_CHECKED = 'CHECKBOX_CHECKED'
-  const CHECKBOX_UNCHECKED = 'CHECKBOX_UNCHECKED'
+  const CHECKBOX = 'CHECKBOX'
+
   const BOLD = 'BOLD'
   const ITALICS = 'ITALICS'
   const UNDERLINED = 'UNDERLINED'
  
-  const FULL_LINE_TYPES = [HEADING, PARA, CHECKBOX_CHECKED, CHECKBOX_UNCHECKED]
-  const INLINE_TYPES = [BOLD, ITALICS, UNDERLINED]
+
+  // full line extractors
+  const getIsHeading = txt => /^\#\s.*/i.test(txt)
+  const getIsCheckboxChecked = txt => /^-\s\[x\]\s.*/i.test(txt)
+  const getIsCheckboxUnchecked = txt => /^-\s\[\s\]\s.*/i.test(txt)
+
+  // inline extracters
+  const matchItalics = txt => txt.match(/_{2}.*?_{2}/gi) || []
+  const matchBold = txt => txt.match(/\*{2}.*?\*{2}/gi) || []
+  const matchUnderlined = txt => txt.match(/\*_.*?_\*/gi) || []
+
+
+  // render func args creators
+  const makeHeading = rawText => ({
+    rawText,
+    type: HEADING,
+    args: {
+      tag: 'h3',
+      data: {
+        class: 'md--heading',
+      },
+      children: [rawText],
+    },
+  })
+
+  const makeCheckbox = (rawText, checked) => ({
+    rawText,
+    type: CHECKBOX,
+    args: {
+      tag: 'span',
+      data: {
+        class: 'md--checkbox',
+        attrs: { checked }
+      },
+      children: [
+        {
+          tag: 'input',
+          data: {
+            attrs: {
+              type: 'checkbox',
+              checked,
+            }
+          }
+        },
+        {
+          tag: 'span',
+          data: null,
+          children: rawText.slice(3)
+        },
+      ],
+    },
+  })
+
+  const makePara = rawText => ({
+    rawText,
+    type: PARA,
+    args: {
+      tag: 'p',
+      data: {
+        class: 'md--para',
+      },
+      children: [rawText],
+    },
+  })
+
+  const makeBold = rawText => ({
+    rawText,
+    type: BOLD,
+    args: {
+      tag: 'span',
+      data: {
+        class: 'md--bold'
+      },
+      children: [rawText.slice(2,-2)]
+    }
+  })
+
+  const makeItalics = rawText => ({
+    rawText,
+    type: ITALICS,
+    args: {
+      tag: 'span',
+      data: {
+        class: 'md--italics'
+      },
+      children: [rawText.slice(2,-2)]
+    }
+  })
+
+  const makeUnderlined = rawText => ({
+    rawText,
+    type: UNDERLINED,
+    args: {
+      tag: 'span',
+      data: {
+        class: 'md--underlined'
+      },
+      children: [rawText.slice(2,-2)]
+    }
+  })
 
   function markdownObjectToString(markdownObj) {
     
   }
 
-  function markdownStringToObject(markdownStr) {
+  /** @param {string} txt */
+  function processLineLevelElements(txt) {
+    return txt.split('\n').reduce((acc, x) => {
+      x = x.trim()
+      if (x.length) {
+        if (getIsHeading(x)) {
+          acc.push(makeHeading(x))
+        } else if (getIsCheckboxChecked(x)) {
+          acc.push(makeCheckbox(x, true))
+        } else if (getIsCheckboxUnchecked(x)) {
+          acc.push(makeCheckbox(x, false))
+        } else {
+          acc.push(makePara(x))
+        }
+      }
+      return acc
+    }, [])
+  }
+
+  function mergeRegexMatches(params) {
     
+  }
+
+  /** @param {string} txt */
+  function processInlineElements(txt) {
+    const bold = matchBold(txt).map(x => ({ text: x, type: BOLD }))
+    const italics = matchItalics(txt).map(x => ({ text: x, type: ITALICS }))
+    const underlined = matchUnderlined(txt).map(x => ({ text: x, type: UNDERLINED }))
+    const sorted = [...bold, ...italics, ...underlined].sort((a, b) => a.index - b.index)
+
+    const accum = []
+    if (sorted.length) {
+      sorted.forEach(x => {
+        const before = txt.slice(0, txt.indexOf(x.text))
+        if (before.length) {
+          accum.push(before)
+        }
+        if (x.type === BOLD) {
+          accum.push(makeBold(x.text))
+        } else if (x.type === ITALICS) {
+          accum.push(makeItalics(x.text))
+        } else if (x.type === UNDERLINED) {
+          accum.push(makeUnderlined(x.text))
+        }
+        txt = txt.replace(before + x.text, '')
+      })
+    } else {
+      accum.push(txt)
+    }
+    return accum
+  }
+  
+
+  /** @param {string} markdownStr */
+  function markdownStringToObject(markdownStr) {
+    return processLineLevelElements(markdownStr)
+      .map(x => {
+        if ([PARA, CHECKBOX].includes(x.type)) {
+          x.args.children = processInlineElements(x.rawText)
+        }
+        return x
+      })
   }
 
   return {
     name: 'MarkdownEditor',
     props: {
       initialMarkdown: Array,
+      maxLines: {
+        type: Number,
+        default: EDITOR_MAX_LINES
+      }
     },
     data: function() {
       return {
@@ -39,10 +202,12 @@ const MarkdownEditor = (function() {
     },
     watch: {
       textareaLinesCount: function(nv, ov) {
-        if (nv > 2 && nv > ov) {
-          this.editorHeight += EDITOR_LINE_HEIGHT
-        } else if (nv > 1 && nv < ov) {
-          this.editorHeight -= EDITOR_LINE_HEIGHT
+        if (nv <= this.maxLines) {
+          if (nv > 2 && nv > ov && this.editorHeight + EDITOR_LINE_HEIGHT) {
+            this.editorHeight += EDITOR_LINE_HEIGHT
+          } else if (nv < ov && this.editorHeight - EDITOR_LINE_HEIGHT >= MIN_EDITOR_HEIGHT) {
+            this.editorHeight -= EDITOR_LINE_HEIGHT
+          }
         }
       },
     },
@@ -52,7 +217,7 @@ const MarkdownEditor = (function() {
       },
       textareaStyle: function() {
         return {
-          height: `${this.editorHeight}px`,
+          minHeight: `${this.editorHeight}px`,
           lineHeight: `${EDITOR_LINE_HEIGHT}px`
         }
       }
@@ -60,12 +225,12 @@ const MarkdownEditor = (function() {
     methods: {
       onSubmit: function(e) {
         e.preventDefault()
-        const d = ''
+        const mdObj = markdownStringToObject(this.markdownText)
+        console.log(mdObj)
       },
     },
     template: `
       <div class="md-editor">
-        {{textareaStyle}}
         <textarea
           class="md-editor__textarea"
           :style="textareaStyle"
