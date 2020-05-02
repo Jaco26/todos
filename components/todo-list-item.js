@@ -134,6 +134,8 @@ const TodoListItem = {
     },
     /** @param {DragEvent} e */
     onContentDragstart: function(e) {
+      e.dataTransfer.dropEffect = 'move'
+      e.dataTransfer.effectAllowed = 'move'
       e.dataTransfer.setData('text', JSON.stringify({
         id: this.id,
         index: this.index,

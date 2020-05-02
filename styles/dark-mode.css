@@ -36,3 +36,10 @@
   background: indianred;
   color: whitesmoke;
 }
+
+
+.dark .md-editor__textarea {
+  border-color: darkgray;
+  background-color: #123;
+  color: aliceblue;
+}

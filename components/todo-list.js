@@ -4,6 +4,7 @@ const TodoList = new Vue({
   name: 'TodoList',
   components: {
     TodoListItem,
+    MarkdownEditor,
   },
   data: function() {
     return {
@@ -127,17 +128,7 @@ const TodoList = new Vue({
         <form @submit.prevent="onSubmit">
           <div style="display:flex; flex-direction:column;">
             <div class="new-item__wrapper">
-              <textarea
-                @focus="showHint = true"
-                @blur="showHint = false"
-                class="new-item__text"
-                placeholder="Type something"
-                @keypress.enter.shift="onSubmit"
-                v-model="newItem"
-              ></textarea>
-              <div class="new-item__hint" :class="{ 'active' : showHint }">
-                "shift" + "return" to submit
-              </div>
+              <MarkdownEditor />
             </div>
             <button class="btn btn--small" style="align-self:flex-end" type="submit">Save</button>
           </div>
@@ -193,3 +184,16 @@ const TodoList = new Vue({
 })
 
 TodoList.$mount('#app')
+
+
+{/* <textarea
+  @focus="showHint = true"
+  @blur="showHint = false"
+  class="new-item__text"
+  placeholder="Type something"
+  @keypress.enter.shift="onSubmit"
+  v-model="newItem"
+></textarea>
+<div class="new-item__hint" :class="{ 'active' : showHint }">
+  "shift" + "return" to submit
+</div> */}

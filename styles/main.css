@@ -72,3 +72,41 @@
   border-right-color: darkorchid;
   border-left-color: deeppink;
 }
+
+
+.md-editor {
+  position: relative;
+}
+
+.md-editor .md-editor__hint {
+  position: absolute;
+  display: none;
+  bottom: -16px;
+  left: 4px;
+  font-size: .75rem;
+}
+
+.md-editor__hint.active {
+  display: inline !important;
+}
+
+.md-editor .md-editor__textarea {
+  resize: none;
+  outline: none;
+  font: inherit;
+  width: 100%;
+  /* min-height: 64px; */
+  padding: .5rem;
+  margin-bottom: .25rem;
+  border: 1px solid black;
+  border-radius: 4px;
+  transition: border ease-in-out .05s;
+}
+
+.md-editor .md-editor__textarea:focus {
+  border: 2px solid;
+  border-top-color: coral;
+  border-bottom-color: deepskyblue;
+  border-right-color: darkorchid;
+  border-left-color: deeppink;
+}
