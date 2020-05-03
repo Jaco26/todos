@@ -92,7 +92,7 @@ const TodoList = new Vue({
     //   this.newItem = ''
     // },
     onSubmit: function(markdown) {
-      console.log('onSubmit > markdown', JSON.parse(JSON.stringify(markdown)))
+      // console.log('onSubmit > markdown', JSON.parse(JSON.stringify(markdown)))
       this.items.push({
         id: uuid(),
         markdown,

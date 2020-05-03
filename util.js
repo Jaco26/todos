@@ -12,3 +12,11 @@ function uuid() {
   }
   return segments.join('-')
 }
+
+function consoleJson(text, json) {
+  if (!json) {
+    console.log(JSON.parse(JSON.stringify(text)))
+  } else {
+    console.log(text, JSON.parse(JSON.stringify(json)))
+  }
+}

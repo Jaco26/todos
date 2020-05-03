@@ -138,10 +138,26 @@ const MarkdownEditor = (function() {
 
   /** @param {string} txt */
   function processInlineElements(txt) {
-    const bold = matchBold(txt).map(x => ({ text: x, type: BOLD }))
-    const italics = matchItalics(txt).map(x => ({ text: x, type: ITALICS }))
-    const underlined = matchUnderlined(txt).map(x => ({ text: x, type: UNDERLINED }))
+    const indexes = {}
+
+    function indexSubstr(x, type) {
+      let index = txt.indexOf(x)
+      if (indexes[x] === index) {
+        index = txt.indexOf(x, index + 1)
+      }
+      indexes[x] = index
+      return { index, type, text: x }
+    }
+
+    const bold = matchBold(txt).map(x => indexSubstr(x, BOLD))
+    const italics = matchItalics(txt).map(x => indexSubstr(x, ITALICS))
+    const underlined = matchUnderlined(txt).map(x => indexSubstr(x, UNDERLINED))
+
+    // const bold = matchBold(txt).map(x => ({ index: txt.indexOf(x), text: x, type: BOLD }))
+    // const italics = matchItalics(txt).map(x => ({ index: txt.indexOf(x), text: x, type: ITALICS }))
+    // const underlined = matchUnderlined(txt).map(x => ({ index: txt.indexOf(x), text: x, type: UNDERLINED }))
     const sorted = [...bold, ...italics, ...underlined].sort((a, b) => a.index - b.index)
+    consoleJson('sorted', sorted)
     const accum = []
     if (sorted.length) {
       sorted.forEach(x => {

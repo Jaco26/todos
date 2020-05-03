@@ -2,7 +2,7 @@
 const MarkdownContent = (function() {
 
   function renderRecursive(createElement, node) {
-    console.log('renderRecursive > node', JSON.parse(JSON.stringify(node)))
+    // console.log('renderRecursive > node', JSON.parse(JSON.stringify(node)))
     if (typeof node === 'string') {
       return node
     }
