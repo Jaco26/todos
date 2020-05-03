@@ -157,7 +157,7 @@ const MarkdownEditor = (function() {
     // const italics = matchItalics(txt).map(x => ({ index: txt.indexOf(x), text: x, type: ITALICS }))
     // const underlined = matchUnderlined(txt).map(x => ({ index: txt.indexOf(x), text: x, type: UNDERLINED }))
     const sorted = [...bold, ...italics, ...underlined].sort((a, b) => a.index - b.index)
-    consoleJson('sorted', sorted)
+    // consoleJson('sorted', sorted)
     const accum = []
     if (sorted.length) {
       sorted.forEach(x => {
@@ -174,6 +174,9 @@ const MarkdownEditor = (function() {
         }
         txt = txt.replace(before + x.text, '')
       })
+      if (txt.length) {
+        accum.push(txt)
+      }
     } else {
       accum.push(txt)
     }
@@ -181,24 +184,35 @@ const MarkdownEditor = (function() {
   }
   
 
-  /** @param {string} markdownStr */
-  function markdownStringToObject(markdownStr) {
-    return processLineLevelElements(markdownStr)
-      .map(x => {
-        if (x.type === PARA) {
-          x.args.children = processInlineElements(x.rawText)
-        }
-        return x
-      })
+  /** @param {string} mdString */
+  function transformMarkdownString(mdString) {
+    return processLineLevelElements(mdString)
+    .map(x => {
+      if (x.type === PARA) {
+        x.args.children = processInlineElements(x.rawText)
+      }
+      return x
+    })
+  }
+
+  /** @param {array} mdArray */
+  function transformMarkdownArray(mdArray) {
+    
   }
 
   return {
     name: 'MarkdownEditor',
     props: {
-      markdown: Array,
+      rawText: String,
       maxLines: {
         type: Number,
         default: EDITOR_MAX_LINES
+      }
+    },
+    mounted: function() {
+      if (this.rawText) {
+        this.markdownText = this.rawText
+        this.$refs.textarea.focus()
       }
     },
     data: function() {
@@ -212,12 +226,12 @@ const MarkdownEditor = (function() {
       textareaLinesCount: function(nv, ov) {
         if (nv <= this.maxLines) {
           if (nv > 2 && nv > ov && this.editorHeight + EDITOR_LINE_HEIGHT) {
-            this.editorHeight += EDITOR_LINE_HEIGHT
+            this.editorHeight = MIN_EDITOR_HEIGHT + EDITOR_LINE_HEIGHT * (nv - 2)
           } else if (nv < ov && this.editorHeight - EDITOR_LINE_HEIGHT >= MIN_EDITOR_HEIGHT) {
-            this.editorHeight -= EDITOR_LINE_HEIGHT
+            this.editorHeight = MIN_EDITOR_HEIGHT + EDITOR_LINE_HEIGHT * (nv - 2)
           }
         }
-        if (nv === 1) {
+        if (nv < 2) {
           this.editorHeight = MIN_EDITOR_HEIGHT
         }
       },
@@ -238,7 +252,7 @@ const MarkdownEditor = (function() {
         e.preventDefault()
         const mdText = this.markdownText.trim()
         if (mdText) {
-          this.$emit('submit', markdownStringToObject(mdText))
+          this.$emit('submit', { rawText: mdText, lines: transformMarkdownString(mdText) })
           this.markdownText = ''
         }
       },
@@ -247,6 +261,7 @@ const MarkdownEditor = (function() {
       <div class="md-editor">
         <form @submit.prevent="onSubmit">
           <textarea
+            ref="textarea"
             class="md-editor__textarea"
             :style="textareaStyle"
             @focus="showHint = true"

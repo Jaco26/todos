@@ -77,32 +77,24 @@ const TodoList = new Vue({
       const index = this.itemIds.indexOf(id)
       this.items.splice(index, 1)
     },
-    // onSubmit: function(e) {
-    //   e.preventDefault()
-    //   const newItem = this.newItem.trim()
-    //   if (newItem) {
-    //     this.items.push({
-    //       id: uuid(),
-    //       text: newItem,
-    //       markdown: markdown.textToMarkdown(newItem),
-    //       complete: false,
-    //       date: new Date().toUTCString()
-    //     })
-    //   }
-    //   this.newItem = ''
-    // },
-    onSubmit: function(markdown) {
-      // console.log('onSubmit > markdown', JSON.parse(JSON.stringify(markdown)))
+    onSubmit: function({ lines, rawText }) {
       this.items.push({
         id: uuid(),
-        markdown,
         complete: false,
+        lines,
+        rawText,
       })
     },
     onUpdateItemOrder({ dragged, toIndex }) {
       const toMove = this.items[dragged.index]
       this.items.splice(dragged.index, 1)
       this.items.splice(toIndex, null, toMove)
+    },
+    onUpdateItemContent: function(id, content) {
+      const itemIndex = this.itemIds.indexOf(id)
+      const item = this.items[itemIndex]
+      this.items.splice(itemIndex, 1, { ...item, ...content })
+
     },
     onSetGroupDraggingIndex: function(index) {
       this.draggingIndex = index
@@ -134,7 +126,7 @@ const TodoList = new Vue({
           <input type="checkbox" id="dark-mode-toggle" v-model="darkMode" />
         </label>
         
-        <MarkdownEditor :markdown="markdown" @submit="onSubmit"  />
+        <MarkdownEditor @submit="onSubmit"  />
 
         <section class="section">
           <div v-if="pendingItems.length">
@@ -149,6 +141,7 @@ const TodoList = new Vue({
                 @setGroupDragging="onSetGroupDraggingIndex"
                 @updateItemStatus="toggleItemStatus(x.id, $event)"
                 @updateItemOrder="onUpdateItemOrder"
+                @updateItemContent="onUpdateItemContent(x.id, $event)"
                 @deleteItem="deleteItem(x.id)"
               />
             </ul>
@@ -171,6 +164,7 @@ const TodoList = new Vue({
                 @setGroupDragging="onSetGroupDraggingIndex"
                 @updateItemStatus="toggleItemStatus(x.id, $event)"
                 @updateItemOrder="onUpdateItemOrder"
+                @updateItemContent="onUpdateItemContent(x.id, $event)"
                 @deleteItem="deleteItem(x.id)"
               />
             </ul>

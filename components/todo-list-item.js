@@ -2,12 +2,14 @@ const TodoListItem = {
   name: 'TodoListItem',
   components: {
     MarkdownContent,
+    MarkdownEditor,
   },
   props: {
     isFirst: Boolean,
     index: Number,
     id: String,
-    markdown: Array,
+    rawText: String, // raw markdown text
+    lines: Array, // formatted markdown elements
     complete: Boolean,
 
     groupDragging: [Boolean, Object],
@@ -15,6 +17,7 @@ const TodoListItem = {
   data: function() {
     return {
       draggable: false,
+      editing: false,
     }
   },
   computed: {
@@ -53,8 +56,13 @@ const TodoListItem = {
           @mouseenter="draggable = true"
           @mouseleave="draggable = false"
         ></div>
-        <div class="content__text">
-          <MarkdownContent :markdown="markdown" />
+        <div class="content__text" @click="editing = true">
+          <div v-if="editing">
+            <MarkdownEditor :rawText="rawText" @submit="onUpdateContent" />
+          </div>
+          <div v-else>
+            <MarkdownContent :markdown="lines" />
+          </div>
         </div>
 
         <div class="content__controls">
@@ -81,7 +89,11 @@ const TodoListItem = {
     </li>
   `,
   methods: {
-    isEligibleForDrop(dragged, position) {
+    onUpdateContent: function({ lines, rawText }) {
+      this.$listeners.updateItemContent({ lines, rawText })
+      this.editing = false
+    },
+    isEligibleForDrop: function(dragged, position) {
       if (dragged.complete !== this.complete) {
         return false
       }
