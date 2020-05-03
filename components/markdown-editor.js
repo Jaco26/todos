@@ -142,7 +142,7 @@ const MarkdownEditor = (function() {
 
     function indexSubstr(x, type) {
       let index = txt.indexOf(x)
-      if (indexes[x] === index) {
+      if (indexes[x] >= index) {
         index = txt.indexOf(x, index + 1)
       }
       indexes[x] = index
