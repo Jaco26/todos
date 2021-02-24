@@ -74,7 +74,7 @@ const TodoListItem = {
             />
           </div>
           <div style="display: flex; flex-direction: row;">
-            <button class="btn btn--small" style="margin-right: 8px" @click="editing = !editing">
+            <button class="btn btn--small" style="margin-right: 12px" @click="editing = !editing">
               <span v-if="editing">&#10003;</span>
               <span v-else>&#9998;</span>
             </button>
