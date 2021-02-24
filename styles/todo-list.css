@@ -40,8 +40,13 @@
 }
 
 .list-item__content .content__text {
-  padding: .5rem 1rem;
+  padding: .5rem;
+  padding-left: 1rem;
+  padding-right: 0;
   flex: 1;
+}
+.list-item__content .content__text--editing {
+  padding-bottom: 1.5rem;
 }
 .list-item__content .content__controls {
   padding: .5rem 1rem;

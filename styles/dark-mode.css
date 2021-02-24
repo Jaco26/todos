@@ -4,7 +4,6 @@
 }
 
 .dark .new-item__text:focus {
-  border: 2px solid;
   border-top-color: coral;
   border-bottom-color: deepskyblue;
   border-right-color: darkorchid;

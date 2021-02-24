@@ -203,6 +203,7 @@ const MarkdownEditor = (function() {
   return {
     name: 'MarkdownEditor',
     props: {
+      isListItem: Boolean,
       rawText: String,
       maxLines: {
         type: Number,
@@ -211,34 +212,28 @@ const MarkdownEditor = (function() {
     },
     mounted: function() {
       if (this.rawText) {
-        this.markdownText = this.rawText
+        this.source = this.rawText
         this.$refs.textarea.focus()
       }
     },
     data: function() {
       return {
-        markdownText: '',
+        source: '',
         showHint: false,
         editorHeight: MIN_EDITOR_HEIGHT,
       }
     },
     watch: {
-      textareaLinesCount: function(nv, ov) {
-        if (nv <= this.maxLines) {
-          if (nv > 2 && nv > ov && this.editorHeight + EDITOR_LINE_HEIGHT) {
-            this.editorHeight = MIN_EDITOR_HEIGHT + EDITOR_LINE_HEIGHT * (nv - 2)
-          } else if (nv < ov && this.editorHeight - EDITOR_LINE_HEIGHT >= MIN_EDITOR_HEIGHT) {
-            this.editorHeight = MIN_EDITOR_HEIGHT + EDITOR_LINE_HEIGHT * (nv - 2)
-          }
-        }
-        if (nv < 2) {
-          this.editorHeight = MIN_EDITOR_HEIGHT
-        }
+      source: function(nv, ov) {
+        this.editorHeight = 5
+        this.$nextTick(() => {
+          this.editorHeight = this.$refs.textarea.scrollHeight + 5
+        })
       },
     },
     computed: {
       textareaLinesCount: function() {
-        return this.markdownText.split('\n').length
+        return this.source.split('\n').length
       },
       textareaStyle: function() {
         return {
@@ -250,10 +245,10 @@ const MarkdownEditor = (function() {
     methods: {
       onSubmit: function(e) {
         e.preventDefault()
-        const mdText = this.markdownText.trim()
+        const mdText = this.source.trim()
         if (mdText) {
           this.$emit('submit', { rawText: mdText, lines: transformMarkdownString(mdText) })
-          this.markdownText = ''
+          this.source = ''
         }
       },
     },
@@ -267,7 +262,7 @@ const MarkdownEditor = (function() {
             @focus="showHint = true"
             @blur="showHint = false"
             @keypress.enter.shift="onSubmit"
-            v-model="markdownText"
+            v-model="source"
           ></textarea>
           <div class="md-editor__controls">
             <div>
@@ -275,7 +270,7 @@ const MarkdownEditor = (function() {
                 "shift" + "return" to submit
               </div>
             </div>
-            <div class="controls__submit">
+            <div v-if="!isListItem" class="controls__submit">
               <button class="btn btn--small" style="align-self:flex-end" type="submit">Save</button>
             </div>
           </div>

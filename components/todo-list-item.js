@@ -56,9 +56,9 @@ const TodoListItem = {
           @mouseenter="draggable = true"
           @mouseleave="draggable = false"
         ></div>
-        <div class="content__text" @click="editing = true">
+        <div class="content__text" :class="{ 'content__text--editing' : editing }">
           <div v-if="editing">
-            <MarkdownEditor :rawText="rawText" @submit="onUpdateContent" />
+            <MarkdownEditor :rawText="rawText" @submit="onUpdateContent" isListItem />
           </div>
           <div v-else>
             <MarkdownContent :markdown="lines" />
@@ -73,8 +73,12 @@ const TodoListItem = {
               @input="$emit('updateItemStatus', !complete)"
             />
           </div>
-          <div>
-            <button class="btn btn-danger btn--small" @click="$emit('deleteItem')">x</button>
+          <div style="display: flex; flex-direction: row;">
+            <button class="btn btn--small" style="margin-right: 8px" @click="editing = !editing">
+              <span v-if="editing">&#10003;</span>
+              <span v-else>&#9998;</span>
+            </button>
+            <button class="btn btn-danger btn--small"  @click="$emit('deleteItem')">&cross;</button>
           </div>
         </div>
 
